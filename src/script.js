@@ -7,12 +7,12 @@ const PRIX_BOIS = {
 const PRIX_QUINCALLERIES = {
     ref1: {
         libelleQuin: "Quincallerie 1",
-        lienQuin: "https://example.com",
+        lienQuin: "lien",
         quantQuin: 14
     },
     ref2: {
         libelleQuin: "Quincallerie 2",
-        lienQuin: "https://example.com",
+        lienQuin: "lien",
         quantQuin: 40
     },
     // Ajoutez d'autres références de quincailleries ici...
