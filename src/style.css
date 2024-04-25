@@ -1,18 +1,15 @@
+/* Bouton "CHOISIR QUINCALLERIE" */
 .div-btn button {
-    padding: 10px 20px; /* Rembourrage intérieur pour un espace autour du texte */
-    border: none; /* Supprimer la bordure */
-    border-radius: 15px; /* Coins arrondis */
-    margin: 0 10px; /* Marge autour des boutons */
+    padding: 10px 20px;
+    border: none;
+    border-radius: 15px;
+    margin: 0 10px;
     margin-bottom: 20px;
-    cursor: pointer; /* Curseur de souris pointer */
-    font-size: 16px; /* Taille de police */
-    width: 250px;
+    cursor: pointer;
+    font-size: 16px;
     font-weight: 900;
-    transition: background-color 0.3s ease; /* Animation de transition pour le changement de couleur de fond */
-}
-
-#btnBois {
-    background-color: rgb(216, 174, 96);
+    width: 250px;
+    transition: background-color 0.3s ease;
 }
 
 #btnQuincallerie {
@@ -20,21 +17,25 @@
     color: #ffffff;
 }
 
-.ligne {
+/* Style pour les lignes de quincaillerie */
+.quincaillerie-line {
     display: flex;
     align-items: center;
     margin-top: 10px;
     padding: 10px;
+    background-color: #0d3ab4;
+    border-radius: 5px;
 }
 
-.ligne input,
-.ligne select {
+.quincaillerie-line input,
+.quincaillerie-line select {
     margin-right: 10px;
     padding: 5px;
     border-radius: 10px;
-    border-width: 0;
+    border: none;
     font-weight: 900;
-    background-color: inherit;
+    background-color: #ffffff;
+    color: #0d3ab4;
 }
 
 .rectangle-case {
@@ -48,26 +49,4 @@
 .rectangle-bleu {
     width: 100%;
     height: 100%;
-}
-
-
-/* Style pour les lignes de bois */
-#ligneBois {
-    background-color: rgb(216, 174, 96);
-    padding: 10px;
-    margin-bottom: 10px;
-    border-radius: 5px;
-}
-
-
-/* Style pour les lignes de quincaillerie */
-#ligneQuincallerie {
-    background-color: #0d3ab4;
-    padding: 10px;
-    margin-bottom: 10px;
-    border-radius: 5px;
-}
-
-#ligneQuincallerie input {
-    color: #ffffff;
 }

@@ -19,7 +19,7 @@ const PRIX_QUINCALLERIES = {
 };
 
 // Fonction pour créer une nouvelle ligne pour le type de bois sélectionné
-function ajouterLigneBois() {
+/*function ajouterLigneBois() {
     const ligneBois = document.getElementById("ligneBois");
 
     // Créer les éléments de la ligne
@@ -55,6 +55,7 @@ function ajouterLigneBois() {
         const boisSelectionne = PRIX_BOIS[selectedRef];
 
         // Mettre à jour le prix total affiché
+        refInput.value = selectedRef;
         prixTotalBois.textContent = `Prix total : ${boisSelectionne.prix} €`;
     });
 
@@ -78,106 +79,140 @@ function ajouterLigneBois() {
     nouvelleLigne.appendChild(createInput("text", "Libellé"));
     nouvelleLigne.appendChild(prixTotalBois);
 
-    // Ajouter la nouvelle ligne au conteneur
+    // Ajouter la nouvelle ligne au conteneurs
     ligneBois.appendChild(nouvelleLigne);
-}
+}*/
 
 
 
 
 // Écouter le clic sur le bouton "BOIS" et ajouter une ligne de bois
-document.getElementById("btnBois").addEventListener("click", ajouterLigneBois);
+//document.getElementById("btnBois").addEventListener("click", ajouterLigneBois);
 
-function ajouterQuincallerie() {
-    const ligneQuincallerie = document.getElementById("ligneQuincallerie");
 
-    // Créer les éléments de la ligne
-    const nouvelleLigne = document.createElement("div");
-    nouvelleLigne.classList.add("ligne");
+document.addEventListener('DOMContentLoaded', () => {
+    const sheetId = '1a39C65ikaCFhSmVf35am3M9iNqSCtXGAWsFylsGxXdg';
+    const sheetUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`;
 
-    // Champs pour sélectionner le type de quincallerie
-    const selectQuincallerie = document.createElement("select");
-    selectQuincallerie.name = "choixQuincallerie";
-    selectQuincallerie.id = "choixQuincallerie";
+    // Tableau pour stocker les libellés et leurs références associées
+    let quincaillerieData = [];
 
-    // Option par défaut
-    const optionDefault = document.createElement("option");
-    optionDefault.text = "Choisir...";
-    selectQuincallerie.appendChild(optionDefault);
+    fetch(sheetUrl)
+        .then(response => response.text())
+        .then(data => {
+            const rows = data.split('\n');
 
-    // Ajouter les options pour chaque type de quincallerie
-    for (const ref in PRIX_QUINCALLERIES) {
-        const quincallerie = PRIX_QUINCALLERIES[ref];
-        const option = document.createElement("option");
-        option.value = ref;
-        option.text = quincallerie.libelleQuin;
-        selectQuincallerie.appendChild(option);
-    }
-
-    // Ajout d'un gestionnaire d'événements pour détecter le changement de sélection
-    selectQuincallerie.addEventListener("change", function() {
-        const selectedRef = selectQuincallerie.value;
-        const quincallerieSelectionnee = PRIX_QUINCALLERIES[selectedRef];
-
-        // Remplir les autres champs avec les données de la quincallerie sélectionnée
-        refInput.value = selectedRef;
-        libelleQuin.value = quincallerieSelectionnee.libelleQuin;
-        lienInput.value = quincallerieSelectionnee.lienQuin;
-        quantQuin.value = quincallerieSelectionnee.quantQuin;
-    });
-
-    // Champ pour saisir la référence de quincallerie
-    const refInput = createInput("text", "REF");
-    refInput.addEventListener("input", function() {
-        const enteredRef = refInput.value.trim();
-
-        // Vérifier si la référence saisie est valide
-        const isValidRef = enteredRef in PRIX_QUINCALLERIES;
-
-        // Si la référence est valide, sélectionner l'option correspondante dans selectQuincallerie
-        if (isValidRef) {
-            const options = selectQuincallerie.options;
-            for (let i = 0; i < options.length; i++) {
-                if (options[i].value === enteredRef) {
-                    options[i].selected = true;
-                    selectQuincallerie.dispatchEvent(new Event('change')); // Déclencher l'événement change manuellement
-                    break;
-                }
+            // Récupérer les libellés et références de chaque quincaillerie
+            for (let i = 1; i < rows.length; i++) {
+                const columns = rows[i].split(',');
+                const libelle = columns[1].trim(); // Colonne libelle (index 1)
+                const ref = columns[5].trim(); // Colonne ref (index 5)
+                const lien = columns[6].trim(); // Colonne lien (index 6)
+                quincaillerieData.push({ libelle, ref, lien });
             }
-        } else {
-            // Réinitialiser les champs si la référence est invalide
-            libelleQuin.value = "";
-            lienInput.value = "";
-            quantQuin.value = "";
-        }
-    });
+        })
+        .catch(error => {
+            console.error('Erreur lors de la récupération des données :', error);
+        });
 
-    // Créer une fonction utilitaire pour générer les champs d'entrée
-    function createInput(type, placeholder) {
-        const input = document.createElement("input");
-        input.type = type;
-        input.placeholder = placeholder;
-        return input;
+    // Fonction pour ajouter une nouvelle ligne de quincaillerie
+    function ajouterQuincallerieLine() {
+        const ligneQuincallerie = document.getElementById("ligneQuincallerie");
+
+        // Création des éléments HTML pour la nouvelle ligne
+        const nouvelleLigne = document.createElement("div");
+        nouvelleLigne.classList.add("quincaillerie-line");
+
+        const selectLibelle = document.createElement("select");
+        const inputRef = document.createElement("input");
+        inputRef.type = "text";
+        inputRef.placeholder = "Référence";
+
+        const inputLien = document.createElement("input");
+        inputLien.type = "text";
+        inputLien.placeholder = "Lien";
+        inputLien.disabled = true; // Désactiver le champ texte lien
+
+        // Remplissage du menu déroulant avec les libellés disponibles
+        quincaillerieData.forEach(item => {
+            const option = document.createElement("option");
+            option.value = item.libelle;
+            option.textContent = item.libelle;
+            selectLibelle.appendChild(option);
+        });
+
+        // Ajout d'un écouteur d'événements pour gérer la sélection dans le menu déroulant
+        selectLibelle.addEventListener("change", () => {
+            const selectedLibelle = selectLibelle.value;
+            const selectedQuincaillerie = quincaillerieData.find(item => item.libelle === selectedLibelle);
+            if (selectedQuincaillerie) {
+                inputRef.value = selectedQuincaillerie.ref;
+                inputLien.value = selectedQuincaillerie.lien;
+            }
+        });
+
+        // Ajout des éléments à la nouvelle ligne
+        nouvelleLigne.appendChild(selectLibelle);
+        nouvelleLigne.appendChild(inputRef);
+        nouvelleLigne.appendChild(inputLien);
+
+        // Ajout de la nouvelle ligne au conteneur
+        ligneQuincallerie.appendChild(nouvelleLigne);
     }
 
-    // Champ pour le libellé de la quincallerie
-    const libelleQuin = createInput("text", "Libellé");
-    // Champ pour le lien de la quincallerie
-    const lienInput = createInput("text", "Lien");
-    // Champ pour la quantité de la quincallerie
-    const quantQuin = createInput("number", "Qté");
-
-    // Ajouter les éléments à la ligne
-    nouvelleLigne.appendChild(selectQuincallerie);
-    nouvelleLigne.appendChild(refInput);
-    nouvelleLigne.appendChild(libelleQuin);
-    nouvelleLigne.appendChild(lienInput);
-    nouvelleLigne.appendChild(quantQuin);
-
-    // Ajouter la nouvelle ligne au conteneur de quincallerie
-    ligneQuincallerie.appendChild(nouvelleLigne);
-}
+    // Ajouter une ligne de quincaillerie lors du clic sur le bouton
+    document.getElementById("btnQuincallerie").addEventListener("click", () => {
+        ajouterQuincallerieLine();
+    });
+});
 
 
 
-document.getElementById("btnQuincallerie").addEventListener("click", ajouterQuincallerie);
+/*document.addEventListener('DOMContentLoaded', () => {
+    // Charger le fichier Excel automatiquement
+    fetch('./src/donnees.xlsx')
+        .then(response => response.arrayBuffer())
+        .then(data => {
+            const workbook = XLSX.read(data, { type: 'array' });
+
+            // Lire la première feuille de calcul
+            const sheetName = workbook.SheetNames[0];
+            const sheet = workbook.Sheets[sheetName];
+
+            // Convertir en JSON
+            const jsonData = XLSX.utils.sheet_to_json(sheet);
+
+            // Afficher les données dans la console
+            console.log(jsonData);
+        })
+        .catch(error => {
+            console.error('Erreur lors du chargement du fichier Excel :', error);
+        });
+});*/
+
+/*document.addEventListener('DOMContentLoaded', () => {
+    const sheetId = '1a39C65ikaCFhSmVf35am3M9iNqSCtXGAWsFylsGxXdg';
+    const sheetUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`;
+
+    fetch(sheetUrl)
+        .then(response => response.text())
+        .then(data => {
+            const rows = data.split('\n');
+
+            // Parcourir les lignes de données (en sautant la première ligne qui contient les en-têtes)
+            for (let i = 1; i < rows.length; i++) {
+                const columns = rows[i].split(',');
+
+                // Récupérer les valeurs pertinentes de chaque colonne
+                const libelle = columns[1]; // Colonne libelle (index 1)
+                const ref = columns[5]; // Colonne ref (index 5)
+                const lien = columns[6]; // Colonne lien (index 6)
+
+                // Appeler la fonction pour ajouter une quincaillerie avec les valeurs récupérées
+                ajouterQuincallerie(libelle, ref, lien);
+            }
+        })
+        .catch(error => {
+            console.error('Erreur lors de la récupération des données :', error);
+        });
+});*/
