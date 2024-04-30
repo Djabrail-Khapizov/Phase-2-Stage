@@ -92,31 +92,74 @@ const PRIX_QUINCALLERIES = {
 
 document.addEventListener('DOMContentLoaded', () => {
     const sheetId = '1a39C65ikaCFhSmVf35am3M9iNqSCtXGAWsFylsGxXdg';
-    const sheetUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`;
+    const feuilleQuin = '770910738';
+    const feuilleBois = '1478504250';
 
-    // Tableau pour stocker les libellés et leurs références associées
+    const getUrl = (feuilleId) => `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&gid=${feuilleId}`;
+
+    // Tableaux pour stocker les données
     let quincaillerieData = [];
+    let boisData = [];
 
-    fetch(sheetUrl)
-        .then(response => response.text())
-        .then(data => {
-            const rows = data.split('\n');
+    // Fonction pour récupérer les données de la feuille "Quincaillerie"
+    const fetchQuincaillerie = (url, quincaillerieData) => {
+        return fetch(url)
+            .then(response => response.text())
+            .then(data => {
+                const rows = data.split('\n');
+                for (let i = 1; i < rows.length; i++) {
+                    const columns = rows[i].split(',');
+                    const libelle = columns[1].trim().replace(/^"(.*)"$/, '$1'); // Retire les guillemets $1 fait référence au contenu fetch
+                const ref = columns[5].trim().replace(/^"(.*)"$/, '$1'); // Retire les guillemets
+                const lien = columns[6].trim().replace(/^"(.*)"$/, '$1'); // Retire les guillemets
+                    quincaillerieData.push({ libelle, ref, lien });
+                }
+            })
+            .catch(error => {
+                console.error('Erreur lors de la récupération des données de la feuille "Quincaillerie":', error);
+            });
+    };
 
-            // Récupérer les libellés et références de chaque quincaillerie
-            for (let i = 1; i < rows.length; i++) {
-                const columns = rows[i].split(',');
-                const libelle = columns[1].trim(); // Colonne libelle (index 1)
-                const ref = columns[5].trim(); // Colonne ref (index 5)
-                const lien = columns[6].trim(); // Colonne lien (index 6)
-                quincaillerieData.push({ libelle, ref, lien });
-            }
-        })
-        .catch(error => {
-            console.error('Erreur lors de la récupération des données :', error);
+    // Fonction pour récupérer les données de la feuille "Bois"
+    const fetchBois = (url, boisData) => {
+        return fetch(url)
+            .then(response => response.text())
+            .then(data => {
+                const rows = data.split('\n');
+                for (let i = 1; i < rows.length; i++) {
+                    const columns = rows[i].split(',');
+                    const typeBois = columns[1].trim().replace(/^"(.*)"$/, '$1');;
+                    const ref = columns[2].trim().replace(/^"(.*)"$/, '$1');;
+                    boisData.push({ typeBois, ref });
+                }
+            })
+            .catch(error => {
+                console.error('Erreur lors de la récupération des données de la feuille "Bois":', error);
+            });
+    };
+
+    fetchBois(getUrl(feuilleBois), boisData)
+        .then(() => {
+            // Une fois les données de la feuille "Bois" récupérées et traitées, vous pouvez effectuer d'autres opérations ici
+            document.getElementById("btnBois").addEventListener("click", () => {
+                ajouterLigneBois(boisData);
+            })
         });
 
+
+    // Appeler les fonctions pour récupérer les données des feuilles
+    fetchQuincaillerie(getUrl(feuilleQuin), quincaillerieData)
+    .then(() => {
+        // Une fois les données de la feuille "Quincaillerie" récupérées et traitées, vous pouvez appeler ajouterQuincallerieLine
+        document.getElementById("btnQuincallerie").addEventListener("click", () => {
+            ajouterQuincallerieLine(quincaillerieData);
+        });
+        });
+    })
+ 
+
     // Fonction pour ajouter une nouvelle ligne de quincaillerie
-    function ajouterQuincallerieLine() {
+    function ajouterQuincallerieLine(quincaillerieData) {
         const ligneQuincallerie = document.getElementById("ligneQuincallerie");
 
         // Création des éléments HTML pour la nouvelle ligne
@@ -133,10 +176,19 @@ document.addEventListener('DOMContentLoaded', () => {
         inputLien.placeholder = "Lien";
         inputLien.disabled = true; // Désactiver le champ texte lien
 
+        const qteQuincaillerie = document.createElement("input");
+        qteQuincaillerie.type = "number";
+        qteQuincaillerie.placeholder = "Qté";
+
+        const endroitQuincaillerie = document.createElement("input");
+        endroitQuincaillerie.type = "text";
+        endroitQuincaillerie.placeholder = "Endroit";
+
+
         // Remplissage du menu déroulant avec les libellés disponibles
         quincaillerieData.forEach(item => {
             const option = document.createElement("option");
-            option.value = item.libelle;
+            //option.value = item.libelle;
             option.textContent = item.libelle;
             selectLibelle.appendChild(option);
         });
@@ -151,22 +203,95 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        inputRef.addEventListener("input", () => {
+            const enteredRef = inputRef.value.trim();
+            const matchingItem = quincaillerieData.find(item => item.ref === enteredRef);
+            if (matchingItem) {
+                // Mettre à jour le menu déroulant avec le libellé correspondant
+                const option = document.createElement("option");
+                option.textContent = matchingItem.libelle;
+                selectLibelle.innerHTML = ''; // Réinitialiser les options
+                selectLibelle.appendChild(option);
+                inputLien.value = matchingItem.lien;
+            }
+        });
+
         // Ajout des éléments à la nouvelle ligne
         nouvelleLigne.appendChild(selectLibelle);
         nouvelleLigne.appendChild(inputRef);
         nouvelleLigne.appendChild(inputLien);
+        nouvelleLigne.appendChild(qteQuincaillerie);
+        nouvelleLigne.appendChild(endroitQuincaillerie);
 
         // Ajout de la nouvelle ligne au conteneur
         ligneQuincallerie.appendChild(nouvelleLigne);
     }
 
-    // Ajouter une ligne de quincaillerie lors du clic sur le bouton
-    document.getElementById("btnQuincallerie").addEventListener("click", () => {
-        ajouterQuincallerieLine();
+
+    function ajouterLigneBois(boisData) {
+        const ligneBois = document.getElementById("ligneBois");
+
+        const nouvelleLigne = document.createElement("div");
+        nouvelleLigne.classList.add("bois-line");
+
+        const selectBois = document.createElement("select");
+        const boisRef = document.createElement("input");
+        boisRef.type = "text";
+        boisRef.placeholder = "Référence";
+
+        const longBois = document.createElement("input");
+        longBois.type = "text";
+        longBois.placeholder = "LONG (mm)";
+
+        const largBois = document.createElement("input");
+        largBois.type = "text";
+        largBois.placeholder = "LARG (mm)";
+
+        const qteBois = document.createElement("input");
+        qteBois.type = "number";
+        qteBois.placeholder = "Qté";
+
+        const libelleBois = document.createElement("input");
+        libelleBois.type = "text";
+        libelleBois.placeholder = "Libellé";
+
+        boisData.forEach(item => {
+            const option = document.createElement("option");
+            option.textContent = item.typeBois;
+            selectBois.appendChild(option);
+        })
+
+        selectBois.addEventListener("change", () => {
+            const selectedTypeBois = selectBois.value;
+            const selectedBois = boisData.find(item => item.typeBois === selectedTypeBois);
+            if (selectedBois) {
+                boisRef.value = selectedBois.ref;
+        }
     });
-});
+
+    boisRef.addEventListener("input", () => {
+        const enteredRef = boisRef.value.trim();
+        const matchingItem = boisData.find(item => item.ref === enteredRef);
+        if (matchingItem) {
+            // Mettre à jour le menu déroulant avec le type de bois correspondant
+            const option = document.createElement("option");
+            option.textContent = matchingItem.typeBois;
+            selectBois.innerHTML = ''; // Réinitialiser les options
+            selectBois.appendChild(option);
+        }
+    });
 
 
+    nouvelleLigne.appendChild(selectBois);
+    nouvelleLigne.appendChild(boisRef);
+    nouvelleLigne.appendChild(longBois);
+    nouvelleLigne.appendChild(largBois);
+    nouvelleLigne.appendChild(qteBois);
+    nouvelleLigne.appendChild(libelleBois);
+
+    ligneBois.appendChild(nouvelleLigne);
+
+}
 
 /*document.addEventListener('DOMContentLoaded', () => {
     // Charger le fichier Excel automatiquement
