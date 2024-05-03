@@ -110,9 +110,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 for (let i = 1; i < rows.length; i++) {
                     const columns = rows[i].split(',');
                     const libelle = columns[1].trim().replace(/^"(.*)"$/, '$1'); // Retire les guillemets $1 fait référence au contenu fetch
-                const ref = columns[5].trim().replace(/^"(.*)"$/, '$1'); // Retire les guillemets
-                const lien = columns[6].trim().replace(/^"(.*)"$/, '$1'); // Retire les guillemets
-                    quincaillerieData.push({ libelle, ref, lien });
+                    const ref = columns[5].trim().replace(/^"(.*)"$/, '$1'); // Retire les guillemets
+                    const lien = columns[6].trim().replace(/^"(.*)"$/, '$1'); // Retire les guillemets
+                    const prixUString = columns[7].trim().replace(/^"(.*)"$/, '$1'); // Récupérer la chaîne de prix
+                    const prixU = parseFloat(prixUString.replace(',', '.')); // Remplacer ',' par '.' avant la conversion en nombre décimal
+
+                    quincaillerieData.push({ libelle, ref, lien, prixU });
+                    console.log(prixU);
                 }
             })
             .catch(error => {
@@ -128,9 +132,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const rows = data.split('\n');
                 for (let i = 1; i < rows.length; i++) {
                     const columns = rows[i].split(',');
-                    const typeBois = columns[1].trim().replace(/^"(.*)"$/, '$1');;
-                    const ref = columns[2].trim().replace(/^"(.*)"$/, '$1');;
-                    boisData.push({ typeBois, ref });
+                    const typeBois = columns[0].trim().replace(/^"(.*)"$/, '$1');
+                    const ref = columns[1].trim().replace(/^"(.*)"$/, '$1');
+                    const prixBois = columns[2].trim().replace(/^"(.*)"$/, '$1');
+                    boisData.push({ typeBois, ref, prixBois });
                 }
             })
             .catch(error => {
@@ -184,6 +189,10 @@ document.addEventListener('DOMContentLoaded', () => {
         endroitQuincaillerie.type = "text";
         endroitQuincaillerie.placeholder = "Endroit";
 
+        const prixUniteQuincaillerie = document.createElement("input");
+        prixUniteQuincaillerie.type = "text";
+        prixUniteQuincaillerie.placeholder = "Prix U";
+        prixUniteQuincaillerie.disabled = true; // Désactiver le champ texte lien
 
         // Remplissage du menu déroulant avec les libellés disponibles
         quincaillerieData.forEach(item => {
@@ -200,6 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (selectedQuincaillerie) {
                 inputRef.value = selectedQuincaillerie.ref;
                 inputLien.value = selectedQuincaillerie.lien;
+                prixUniteQuincaillerie.value = selectedQuincaillerie.prixU; // Afficher le prix avec deux décimales
             }
         });
 
@@ -222,6 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
         nouvelleLigne.appendChild(inputLien);
         nouvelleLigne.appendChild(qteQuincaillerie);
         nouvelleLigne.appendChild(endroitQuincaillerie);
+        nouvelleLigne.appendChild(prixUniteQuincaillerie);
 
         // Ajout de la nouvelle ligne au conteneur
         ligneQuincallerie.appendChild(nouvelleLigne);
@@ -255,6 +266,26 @@ document.addEventListener('DOMContentLoaded', () => {
         libelleBois.type = "text";
         libelleBois.placeholder = "Libellé";
 
+        const prixMBois = document.createElement("input");
+        prixMBois.type = "text";
+        prixMBois.placeholder = "Prix m2";
+        prixMBois.disabled = true; // Désactiver le champ texte lien
+
+        // Div pour afficher les caractères spéciaux
+        const specialCharsDiv = document.createElement("div");
+        specialCharsDiv.style.cursor = "pointer";
+        specialCharsDiv.textContent = "\u204e"; // Afficher le premier caractère par défaut
+
+    // Tableau des caractères spéciaux à afficher
+        const specialCharacters = ["\u204e", "\u21ae", "\u2195"];
+        let currentCharIndex = 0; // Indice du caractère actuellement affiché
+
+         // Gestionnaire d'événements pour basculer entre les caractères spéciaux
+         specialCharsDiv.addEventListener("click", () => {
+            currentCharIndex = (currentCharIndex + 1) % specialCharacters.length;
+            specialCharsDiv.textContent = specialCharacters[currentCharIndex];
+        });
+
         boisData.forEach(item => {
             const option = document.createElement("option");
             option.textContent = item.typeBois;
@@ -266,6 +297,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const selectedBois = boisData.find(item => item.typeBois === selectedTypeBois);
             if (selectedBois) {
                 boisRef.value = selectedBois.ref;
+                prixMBois.value = selectedBois.prixBois;
         }
     });
 
@@ -288,6 +320,8 @@ document.addEventListener('DOMContentLoaded', () => {
     nouvelleLigne.appendChild(largBois);
     nouvelleLigne.appendChild(qteBois);
     nouvelleLigne.appendChild(libelleBois);
+    nouvelleLigne.appendChild(specialCharsDiv); // Ajout de la zone des caractères spéciaux
+    nouvelleLigne.appendChild(prixMBois);
 
     ligneBois.appendChild(nouvelleLigne);
 
