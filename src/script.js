@@ -107,22 +107,53 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(response => response.text())
             .then(data => {
                 const rows = data.split('\n');
+    
+                // Parcourir chaque ligne de la feuille CSV
                 for (let i = 1; i < rows.length; i++) {
-                    const columns = rows[i].split(',');
-                    const libelle = columns[1].trim().replace(/^"(.*)"$/, '$1'); // Retire les guillemets $1 fait référence au contenu fetch
-                    const ref = columns[5].trim().replace(/^"(.*)"$/, '$1'); // Retire les guillemets
-                    const lien = columns[6].trim().replace(/^"(.*)"$/, '$1'); // Retire les guillemets
-                    const prixUString = columns[7].trim().replace(/^"(.*)"$/, '$1'); // Récupérer la chaîne de prix
-                    const prixU = parseFloat(prixUString.replace(',', '.')); // Remplacer ',' par '.' avant la conversion en nombre décimal
-
-                    quincaillerieData.push({ libelle, ref, lien, prixU });
-                    console.log(prixU);
+                    const columns = parseCSVRow(rows[i]);
+    
+                    if (columns.length >= 8) {
+                        const libelle = columns[1].trim().replace(/^"(.*)"$/, '$1'); // Retire les guillemets
+                        const ref = columns[5].trim().replace(/^"(.*)"$/, '$1'); // Retire les guillemets
+                        const lien = columns[6].trim().replace(/^"(.*)"$/, '$1'); // Retire les guillemets
+                        const prixUString = columns[7].trim();
+                        // Ajouter les données à quincaillerieData sans conversion de prixU
+                        quincaillerieData.push({ libelle, ref, lien, prixU: prixUString });
+                        console.log(columns);
+                    }
                 }
             })
             .catch(error => {
                 console.error('Erreur lors de la récupération des données de la feuille "Quincaillerie":', error);
             });
     };
+    
+    // Fonction pour diviser une ligne CSV en colonnes en tenant compte des virgules dans les valeurs monétaires
+    const parseCSVRow = (row) => {
+        const columns = [];
+        let current = '';
+        let inQuotes = false;
+    
+        for (let i = 0; i < row.length; i++) {
+            const char = row[i];
+    
+            if (char === '"') {
+                inQuotes = !inQuotes;
+            } else if (char === ',' && !inQuotes) {
+                columns.push(current);
+                current = '';
+            } else {
+                current += char;
+            }
+        }
+    
+        columns.push(current); // Ajouter la dernière colonne
+    
+        return columns;
+    };
+    
+        
+    
 
     // Fonction pour récupérer les données de la feuille "Bois"
     const fetchBois = (url, boisData) => {
@@ -130,18 +161,26 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(response => response.text())
             .then(data => {
                 const rows = data.split('\n');
+    
+                // Parcourir chaque ligne de la feuille CSV
                 for (let i = 1; i < rows.length; i++) {
-                    const columns = rows[i].split(',');
-                    const typeBois = columns[0].trim().replace(/^"(.*)"$/, '$1');
-                    const ref = columns[1].trim().replace(/^"(.*)"$/, '$1');
-                    const prixBois = columns[2].trim().replace(/^"(.*)"$/, '$1');
-                    boisData.push({ typeBois, ref, prixBois });
+                    const columns = parseCSVRow(rows[i]);
+    
+                    if (columns.length >= 3) {
+                        const typeBois = columns[0].trim().replace(/^"(.*)"$/, '$1');
+                        const ref = columns[1].trim().replace(/^"(.*)"$/, '$1');
+                        const prixBois = columns[2].trim();
+    
+                        // Ajouter les données à boisData telles quelles
+                        boisData.push({ typeBois, ref, prixBois });
+                        console.log(columns);
+                    }
                 }
             })
             .catch(error => {
                 console.error('Erreur lors de la récupération des données de la feuille "Bois":', error);
             });
-    };
+    }; 
 
     fetchBois(getUrl(feuilleBois), boisData)
         .then(() => {
@@ -326,6 +365,23 @@ document.addEventListener('DOMContentLoaded', () => {
     ligneBois.appendChild(nouvelleLigne);
 
 }
+
+/* PRIX M2 * SURFACE
+
+SURFACE = LONG * LARG * QTE*/
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /*document.addEventListener('DOMContentLoaded', () => {
     // Charger le fichier Excel automatiquement
