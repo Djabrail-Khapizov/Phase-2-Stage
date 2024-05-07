@@ -116,10 +116,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         const libelle = columns[1].trim().replace(/^"(.*)"$/, '$1'); // Retire les guillemets
                         const ref = columns[5].trim().replace(/^"(.*)"$/, '$1'); // Retire les guillemets
                         const lien = columns[6].trim().replace(/^"(.*)"$/, '$1'); // Retire les guillemets
-                        const prixUString = columns[7].trim();
+                        const prixU = columns[7].trim();
                         // Ajouter les données à quincaillerieData sans conversion de prixU
-                        quincaillerieData.push({ libelle, ref, lien, prixU: prixUString });
-                        console.log(columns);
+                        quincaillerieData.push({ libelle, ref, lien, prixU});
                     }
                 }
             })
@@ -173,7 +172,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
                         // Ajouter les données à boisData telles quelles
                         boisData.push({ typeBois, ref, prixBois });
-                        console.log(columns);
                     }
                 }
             })
@@ -202,80 +200,94 @@ document.addEventListener('DOMContentLoaded', () => {
     })
  
 
-    // Fonction pour ajouter une nouvelle ligne de quincaillerie
-    function ajouterQuincallerieLine(quincaillerieData) {
-        const ligneQuincallerie = document.getElementById("ligneQuincallerie");
+   // Fonction pour ajouter une nouvelle ligne de quincaillerie
+function ajouterQuincallerieLine(quincaillerieData) {
+    const ligneQuincallerie = document.getElementById("ligneQuincallerie");
 
-        // Création des éléments HTML pour la nouvelle ligne
-        const nouvelleLigne = document.createElement("div");
-        nouvelleLigne.classList.add("quincaillerie-line");
+    // Création des éléments HTML pour la nouvelle ligne
+    const nouvelleLigne = document.createElement("div");
+    nouvelleLigne.classList.add("quincaillerie-line");
 
-        const selectLibelle = document.createElement("select");
-        const inputRef = document.createElement("input");
-        inputRef.type = "text";
-        inputRef.placeholder = "Référence";
+    const selectLibelle = document.createElement("select");
+    const inputRef = document.createElement("input");
+    inputRef.type = "text";
+    inputRef.placeholder = "Référence";
 
-        const inputLien = document.createElement("input");
-        inputLien.type = "text";
-        inputLien.placeholder = "Lien";
-        inputLien.disabled = true; // Désactiver le champ texte lien
+    const inputLien = document.createElement("input");
+    inputLien.type = "text";
+    inputLien.placeholder = "Lien";
+    inputLien.disabled = true; // Désactiver le champ texte lien
 
-        const qteQuincaillerie = document.createElement("input");
-        qteQuincaillerie.type = "number";
-        qteQuincaillerie.placeholder = "Qté";
+    const qteQuincaillerie = document.createElement("input");
+    qteQuincaillerie.type = "number";
+    qteQuincaillerie.placeholder = "Qté";
 
-        const endroitQuincaillerie = document.createElement("input");
-        endroitQuincaillerie.type = "text";
-        endroitQuincaillerie.placeholder = "Endroit";
+    const endroitQuincaillerie = document.createElement("input");
+    endroitQuincaillerie.type = "text";
+    endroitQuincaillerie.placeholder = "Endroit";
 
-        const prixUniteQuincaillerie = document.createElement("input");
-        prixUniteQuincaillerie.type = "text";
-        prixUniteQuincaillerie.placeholder = "Prix U";
-        prixUniteQuincaillerie.disabled = true; // Désactiver le champ texte lien
+    const prixUniteQuincaillerie = document.createElement("input");
+    prixUniteQuincaillerie.type = "text";
+    prixUniteQuincaillerie.placeholder = "Prix U";
+    prixUniteQuincaillerie.disabled = true; // Désactiver le champ texte lien
 
-        // Remplissage du menu déroulant avec les libellés disponibles
-        quincaillerieData.forEach(item => {
-            const option = document.createElement("option");
-            //option.value = item.libelle;
-            option.textContent = item.libelle;
-            selectLibelle.appendChild(option);
+    const resultatQuincaillerie = document.createElement("input");
+    resultatQuincaillerie.type = "text";
+    resultatQuincaillerie.placeholder = "Résultat";
+    resultatQuincaillerie.disabled = true; // Rendre le champ de résultat non modifiable
+
+    const deleteButton = document.createElement("button");
+    deleteButton.textContent = "\ud83d\uddd1";
+    deleteButton.classList.add("delete-button");
+
+    deleteButton.addEventListener("click", () => {
+        // Supprimer la ligne parente lors du clic sur le bouton Supprimer
+            ligneQuincallerie.removeChild(nouvelleLigne);
         });
 
-        // Ajout d'un écouteur d'événements pour gérer la sélection dans le menu déroulant
-        selectLibelle.addEventListener("change", () => {
-            const selectedLibelle = selectLibelle.value;
-            const selectedQuincaillerie = quincaillerieData.find(item => item.libelle === selectedLibelle);
-            if (selectedQuincaillerie) {
-                inputRef.value = selectedQuincaillerie.ref;
-                inputLien.value = selectedQuincaillerie.lien;
-                prixUniteQuincaillerie.value = selectedQuincaillerie.prixU; // Afficher le prix avec deux décimales
-            }
-        });
+    // Événement pour mettre à jour le résultat lors de la modification de la quantité
+    qteQuincaillerie.addEventListener("input", () => {
+        const quantite = parseFloat(qteQuincaillerie.value) || 0;
+        const prixUnitaire = parseFloat(prixUniteQuincaillerie.value) || 0;
+        const resultat = quantite * prixUnitaire;
 
-        inputRef.addEventListener("input", () => {
-            const enteredRef = inputRef.value.trim();
-            const matchingItem = quincaillerieData.find(item => item.ref === enteredRef);
-            if (matchingItem) {
-                // Mettre à jour le menu déroulant avec le libellé correspondant
-                const option = document.createElement("option");
-                option.textContent = matchingItem.libelle;
-                selectLibelle.innerHTML = ''; // Réinitialiser les options
-                selectLibelle.appendChild(option);
-                inputLien.value = matchingItem.lien;
-            }
-        });
+        if (!isNaN(resultat) && resultat !== 0) {
+            resultatQuincaillerie.value = resultat.toFixed(2);
+            console.log("Ca marche pas")
+        }
+    });
 
-        // Ajout des éléments à la nouvelle ligne
-        nouvelleLigne.appendChild(selectLibelle);
-        nouvelleLigne.appendChild(inputRef);
-        nouvelleLigne.appendChild(inputLien);
-        nouvelleLigne.appendChild(qteQuincaillerie);
-        nouvelleLigne.appendChild(endroitQuincaillerie);
-        nouvelleLigne.appendChild(prixUniteQuincaillerie);
+    // Remplissage du menu déroulant avec les libellés disponibles
+    quincaillerieData.forEach(item => {
+        const option = document.createElement("option");
+        option.textContent = item.libelle;
+        selectLibelle.appendChild(option);
+    });
 
-        // Ajout de la nouvelle ligne au conteneur
-        ligneQuincallerie.appendChild(nouvelleLigne);
-    }
+    // Ajout d'un écouteur d'événements pour gérer la sélection dans le menu déroulant
+    selectLibelle.addEventListener("change", () => {
+        const selectedLibelle = selectLibelle.value;
+        const selectedQuincaillerie = quincaillerieData.find(item => item.libelle === selectedLibelle);
+        if (selectedQuincaillerie) {
+            inputRef.value = selectedQuincaillerie.ref;
+            inputLien.value = selectedQuincaillerie.lien;
+            prixUniteQuincaillerie.value = selectedQuincaillerie.prixU;
+        }
+    });
+
+    // Ajout des éléments à la nouvelle ligne
+    nouvelleLigne.appendChild(selectLibelle);
+    nouvelleLigne.appendChild(inputRef);
+    nouvelleLigne.appendChild(inputLien);
+    nouvelleLigne.appendChild(qteQuincaillerie);
+    nouvelleLigne.appendChild(endroitQuincaillerie);
+    nouvelleLigne.appendChild(prixUniteQuincaillerie);
+    nouvelleLigne.appendChild(resultatQuincaillerie);
+    nouvelleLigne.appendChild(deleteButton);
+
+    // Ajout de la nouvelle ligne au conteneur
+    ligneQuincallerie.appendChild(nouvelleLigne);
+}
 
 
     function ajouterLigneBois(boisData) {
@@ -319,6 +331,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const specialCharacters = ["\u204e", "\u21ae", "\u2195"];
         let currentCharIndex = 0; // Indice du caractère actuellement affiché
 
+        const deleteButton = document.createElement("button");
+        deleteButton.textContent = "\ud83d\uddd1";
+        deleteButton.classList.add("delete-button");
+        deleteButton.addEventListener("click", () => {
+        // Supprimer la ligne parente lors du clic sur le bouton Supprimer
+            ligneBois.removeChild(nouvelleLigne);
+        });
          // Gestionnaire d'événements pour basculer entre les caractères spéciaux
          specialCharsDiv.addEventListener("click", () => {
             currentCharIndex = (currentCharIndex + 1) % specialCharacters.length;
@@ -361,10 +380,12 @@ document.addEventListener('DOMContentLoaded', () => {
     nouvelleLigne.appendChild(libelleBois);
     nouvelleLigne.appendChild(specialCharsDiv); // Ajout de la zone des caractères spéciaux
     nouvelleLigne.appendChild(prixMBois);
+    nouvelleLigne.appendChild(deleteButton);
 
     ligneBois.appendChild(nouvelleLigne);
 
 }
+
 
 /* PRIX M2 * SURFACE
 
