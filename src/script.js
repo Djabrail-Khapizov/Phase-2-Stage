@@ -101,7 +101,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let quincaillerieData = [];
     let boisData = [];
 
-    // Fonction pour récupérer les données de la feuille "Quincaillerie"
     const fetchQuincaillerie = (url, quincaillerieData) => {
         return fetch(url)
             .then(response => response.text())
@@ -116,15 +115,23 @@ document.addEventListener('DOMContentLoaded', () => {
                         const libelle = columns[1].trim().replace(/^"(.*)"$/, '$1'); // Retire les guillemets
                         const ref = columns[5].trim().replace(/^"(.*)"$/, '$1'); // Retire les guillemets
                         const lien = columns[6].trim().replace(/^"(.*)"$/, '$1'); // Retire les guillemets
-                        const prixU = columns[7].trim();
-                        // Ajouter les données à quincaillerieData sans conversion de prixU
-                        quincaillerieData.push({ libelle, ref, lien, prixU});
+                        const prixUWithEuro = columns[7].trim(); // Prix avec le symbole Euro
+                        const prixU = parsePrice(prixUWithEuro); // Convertir en nombre sans symbole Euro
+    
+                        // Ajouter les données à quincaillerieData avec le prix converti
+                        quincaillerieData.push({ libelle, ref, lien, prixU });
                     }
                 }
             })
             .catch(error => {
                 console.error('Erreur lors de la récupération des données de la feuille "Quincaillerie":', error);
             });
+    };
+    
+    // Fonction pour extraire la valeur numérique du prix en retirant uniquement le symbole Euro
+    const parsePrice = (priceWithEuro) => {
+        const numericValue = parseFloat(priceWithEuro.replace(/[^\d,.]/g, '').replace(',', '.')); // Remplacer les virgules par des points pour la conversion en nombre
+        return isNaN(numericValue) ? 0 : numericValue; // Retourner 0 si la conversion échoue
     };
     
     // Fonction pour diviser une ligne CSV en colonnes en tenant compte des virgules dans les valeurs monétaires
@@ -252,10 +259,17 @@ function ajouterQuincallerieLine(quincaillerieData) {
         const resultat = quantite * prixUnitaire;
 
         if (!isNaN(resultat) && resultat !== 0) {
-            resultatQuincaillerie.value = resultat.toFixed(2);
-            console.log("Ca marche pas")
+            resultatQuincaillerie.value = formatCurrency(resultat); // Formatage du résultat avec le symbole Euro
         }
     });
+
+    
+
+    // Fonction pour formater le résultat avec le symbole Euro
+    const formatCurrency = (value) => {
+        const formattedValue = value.toFixed(2); // Formatage avec deux décimales
+        return `${formattedValue} €`; // Ajouter le symbole Euro à la fin
+    };
 
     // Remplissage du menu déroulant avec les libellés disponibles
     quincaillerieData.forEach(item => {
@@ -264,16 +278,25 @@ function ajouterQuincallerieLine(quincaillerieData) {
         selectLibelle.appendChild(option);
     });
 
-    // Ajout d'un écouteur d'événements pour gérer la sélection dans le menu déroulant
-    selectLibelle.addEventListener("change", () => {
-        const selectedLibelle = selectLibelle.value;
-        const selectedQuincaillerie = quincaillerieData.find(item => item.libelle === selectedLibelle);
-        if (selectedQuincaillerie) {
-            inputRef.value = selectedQuincaillerie.ref;
-            inputLien.value = selectedQuincaillerie.lien;
-            prixUniteQuincaillerie.value = selectedQuincaillerie.prixU;
-        }
-    });
+   // Ajout d'un écouteur d'événements pour gérer la sélection dans le menu déroulant
+selectLibelle.addEventListener("change", () => {
+    const selectedLibelle = selectLibelle.value;
+    const selectedQuincaillerie = quincaillerieData.find(item => item.libelle === selectedLibelle);
+    if (selectedQuincaillerie) {
+        inputRef.value = selectedQuincaillerie.ref;
+        inputLien.value = selectedQuincaillerie.lien;
+
+        // Formatage du prix unitaire avec le symbole Euro et le suffixe "/U"
+        prixUniteQuincaillerie.value = formatCurrency2(selectedQuincaillerie.prixU);
+    }
+});
+
+// Fonction pour formater le prix unitaire avec le symbole Euro et le suffixe "/U"
+const formatCurrency2 = (value) => {
+    const formattedValue = value.toFixed(2); // Formatage avec deux décimales
+    return `${formattedValue} €/U`; // Ajouter le symbole Euro suivi de "/U" à la fin
+};
+
 
     // Ajout des éléments à la nouvelle ligne
     nouvelleLigne.appendChild(selectLibelle);
@@ -290,72 +313,72 @@ function ajouterQuincallerieLine(quincaillerieData) {
 }
 
 
-    function ajouterLigneBois(boisData) {
-        const ligneBois = document.getElementById("ligneBois");
+function ajouterLigneBois(boisData) {
+    const ligneBois = document.getElementById("ligneBois");
 
-        const nouvelleLigne = document.createElement("div");
-        nouvelleLigne.classList.add("bois-line");
+    const nouvelleLigne = document.createElement("div");
+    nouvelleLigne.classList.add("bois-line");
 
-        const selectBois = document.createElement("select");
-        const boisRef = document.createElement("input");
-        boisRef.type = "text";
-        boisRef.placeholder = "Référence";
+    const selectBois = document.createElement("select");
+    const boisRef = document.createElement("input");
+    boisRef.type = "text";
+    boisRef.placeholder = "Référence";
 
-        const longBois = document.createElement("input");
-        longBois.type = "text";
-        longBois.placeholder = "LONG (mm)";
+    const longBois = document.createElement("input");
+    longBois.type = "number";
+    longBois.placeholder = "LONG (mm)";
 
-        const largBois = document.createElement("input");
-        largBois.type = "text";
-        largBois.placeholder = "LARG (mm)";
+    const largBois = document.createElement("input");
+    largBois.type = "number";
+    largBois.placeholder = "LARG (mm)";
 
-        const qteBois = document.createElement("input");
-        qteBois.type = "number";
-        qteBois.placeholder = "Qté";
+    const qteBois = document.createElement("input");
+    qteBois.type = "number";
+    qteBois.placeholder = "Qté";
 
-        const libelleBois = document.createElement("input");
-        libelleBois.type = "text";
-        libelleBois.placeholder = "Libellé";
+    const libelleBois = document.createElement("input");
+    libelleBois.type = "text";
+    libelleBois.placeholder = "Libellé";
 
-        const prixMBois = document.createElement("input");
-        prixMBois.type = "text";
-        prixMBois.placeholder = "Prix m2";
-        prixMBois.disabled = true; // Désactiver le champ texte lien
+    const prixMBois = document.createElement("input");
+    prixMBois.type = "number";
+    prixMBois.placeholder = "Prix/m²";
+    prixMBois.disabled = true;
 
-        // Div pour afficher les caractères spéciaux
-        const specialCharsDiv = document.createElement("div");
-        specialCharsDiv.style.cursor = "pointer";
-        specialCharsDiv.textContent = "\u204e"; // Afficher le premier caractère par défaut
+    const surfaceBois = document.createElement("input");
+    surfaceBois.type = "text";
+    surfaceBois.placeholder = "Surface (m²)";
+    surfaceBois.disabled = true;
 
-    // Tableau des caractères spéciaux à afficher
-        const specialCharacters = ["\u204e", "\u21ae", "\u2195"];
-        let currentCharIndex = 0; // Indice du caractère actuellement affiché
+    const prixTotalBois = document.createElement("input");
+    prixTotalBois.type = "text";
+    prixTotalBois.placeholder = "Total";
+    prixTotalBois.disabled = true;
 
-        const deleteButton = document.createElement("button");
-        deleteButton.textContent = "\ud83d\uddd1";
-        deleteButton.classList.add("delete-button");
-        deleteButton.addEventListener("click", () => {
-        // Supprimer la ligne parente lors du clic sur le bouton Supprimer
-            ligneBois.removeChild(nouvelleLigne);
-        });
-         // Gestionnaire d'événements pour basculer entre les caractères spéciaux
-         specialCharsDiv.addEventListener("click", () => {
-            currentCharIndex = (currentCharIndex + 1) % specialCharacters.length;
-            specialCharsDiv.textContent = specialCharacters[currentCharIndex];
-        });
+    const specialCharsDiv = document.createElement("div");
+    specialCharsDiv.style.cursor = "pointer";
+    specialCharsDiv.textContent = "\u204e"; // Afficher le premier caractère par défaut
 
-        boisData.forEach(item => {
-            const option = document.createElement("option");
-            option.textContent = item.typeBois;
-            selectBois.appendChild(option);
-        })
+    const deleteButton = document.createElement("button");
+    deleteButton.textContent = "\ud83d\uddd1";
+    deleteButton.classList.add("delete-button");
+    deleteButton.addEventListener("click", () => {
+        ligneBois.removeChild(nouvelleLigne);
+    });
 
-        selectBois.addEventListener("change", () => {
-            const selectedTypeBois = selectBois.value;
-            const selectedBois = boisData.find(item => item.typeBois === selectedTypeBois);
-            if (selectedBois) {
-                boisRef.value = selectedBois.ref;
-                prixMBois.value = selectedBois.prixBois;
+    // Ajout des options de bois au menu déroulant
+    boisData.forEach(item => {
+        const option = document.createElement("option");
+        option.textContent = item.typeBois;
+        selectBois.appendChild(option);
+    });
+
+    selectBois.addEventListener("change", () => {
+        const selectedTypeBois = selectBois.value;
+        const selectedBois = boisData.find(item => item.typeBois === selectedTypeBois);
+        if (selectedBois) {
+            boisRef.value = selectedBois.ref;
+            prixMBois.value = selectedBois.prixBois;
         }
     });
 
@@ -371,20 +394,44 @@ function ajouterQuincallerieLine(quincaillerieData) {
         }
     });
 
+    // Gestionnaire d'événements pour calculer la surface et le prix total lorsque les valeurs sont modifiées
+    const updateSurfaceAndPrice = () => {
+        const longueur = parseFloat(longBois.value) / 1000 || 0; // Conversion de mm en m
+        const largeur = parseFloat(largBois.value) / 1000 || 0; // Conversion de mm en m
+        const quantite = parseFloat(qteBois.value) || 0;
+        const prixM2 = parseFloat(prixMBois.value) || 0;
 
+        const surface = longueur * largeur * quantite;
+        surfaceBois.value = surface.toFixed(2) + " m²";
+
+        const prixTotal = prixM2 * surface;
+        prixTotalBois.value = prixTotal.toFixed(2) + " €"; // Supposons que le prix soit en euros
+    };
+
+    // Écouteurs d'événements pour mettre à jour la surface et le prix total
+    longBois.addEventListener("input", updateSurfaceAndPrice);
+    largBois.addEventListener("input", updateSurfaceAndPrice);
+    qteBois.addEventListener("input", updateSurfaceAndPrice);
+    prixMBois.addEventListener("input", updateSurfaceAndPrice);
+
+    // Ajout des éléments à la nouvelle ligne
     nouvelleLigne.appendChild(selectBois);
     nouvelleLigne.appendChild(boisRef);
     nouvelleLigne.appendChild(longBois);
     nouvelleLigne.appendChild(largBois);
     nouvelleLigne.appendChild(qteBois);
     nouvelleLigne.appendChild(libelleBois);
-    nouvelleLigne.appendChild(specialCharsDiv); // Ajout de la zone des caractères spéciaux
     nouvelleLigne.appendChild(prixMBois);
+    nouvelleLigne.appendChild(surfaceBois); // Ajout du champ de surface
+    nouvelleLigne.appendChild(prixTotalBois); // Ajout du champ de prix total
+    nouvelleLigne.appendChild(specialCharsDiv); // Ajout de la zone des caractères spéciaux
     nouvelleLigne.appendChild(deleteButton);
 
     ligneBois.appendChild(nouvelleLigne);
-
 }
+
+
+
 
 
 /* PRIX M2 * SURFACE
