@@ -161,31 +161,32 @@ document.addEventListener('DOMContentLoaded', () => {
         
     
 
-    // Fonction pour récupérer les données de la feuille "Bois"
-    const fetchBois = (url, boisData) => {
-        return fetch(url)
-            .then(response => response.text())
-            .then(data => {
-                const rows = data.split('\n');
-    
-                // Parcourir chaque ligne de la feuille CSV
-                for (let i = 1; i < rows.length; i++) {
-                    const columns = parseCSVRow(rows[i]);
-    
-                    if (columns.length >= 3) {
-                        const typeBois = columns[0].trim().replace(/^"(.*)"$/, '$1');
-                        const ref = columns[1].trim().replace(/^"(.*)"$/, '$1');
-                        const prixBois = columns[2].trim();
-    
-                        // Ajouter les données à boisData telles quelles
-                        boisData.push({ typeBois, ref, prixBois });
-                    }
+   // Fonction pour récupérer les données de la feuille "Bois"
+const fetchBois = (url, boisData) => {
+    return fetch(url)
+        .then(response => response.text())
+        .then(data => {
+            const rows = data.split('\n');
+
+            // Parcourir chaque ligne de la feuille CSV
+            for (let i = 1; i < rows.length; i++) {
+                const columns = parseCSVRow(rows[i]);
+
+                if (columns.length >= 3) {
+                    const typeBois = columns[0].trim().replace(/^"(.*)"$/, '$1');
+                    const ref = columns[1].trim().replace(/^"(.*)"$/, '$1');
+                    const prixBoisWithEuro = columns[2].trim(); // Prix avec le symbole Euro
+                    const prixBois = parsePrice(prixBoisWithEuro); // Convertir en nombre sans symbole Euro
+
+                    // Ajouter les données à boisData avec le prix converti
+                    boisData.push({ typeBois, ref, prixBois });
                 }
-            })
-            .catch(error => {
-                console.error('Erreur lors de la récupération des données de la feuille "Bois":', error);
-            });
-    }; 
+            }
+        })
+        .catch(error => {
+            console.error('Erreur lors de la récupération des données de la feuille "Bois":', error);
+        });
+};
 
     fetchBois(getUrl(feuilleBois), boisData)
         .then(() => {
@@ -421,10 +422,9 @@ function ajouterLigneBois(boisData) {
     nouvelleLigne.appendChild(largBois);
     nouvelleLigne.appendChild(qteBois);
     nouvelleLigne.appendChild(libelleBois);
-    nouvelleLigne.appendChild(prixMBois);
     nouvelleLigne.appendChild(surfaceBois); // Ajout du champ de surface
     nouvelleLigne.appendChild(prixTotalBois); // Ajout du champ de prix total
-    nouvelleLigne.appendChild(specialCharsDiv); // Ajout de la zone des caractères spéciaux
+    //nouvelleLigne.appendChild(specialCharsDiv); // Ajout de la zone des caractères spéciaux
     nouvelleLigne.appendChild(deleteButton);
 
     ligneBois.appendChild(nouvelleLigne);
