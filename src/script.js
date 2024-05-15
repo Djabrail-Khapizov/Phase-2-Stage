@@ -208,6 +208,27 @@ const fetchBois = (url, boisData) => {
     })
  
 
+function calculerTotauxQuincaillerie() {
+    const lignes = document.querySelectorAll('.quincaillerie-line');
+    let totalQuantite = 0;
+    let totalPrix = 0;
+
+    lignes.forEach(ligne => {
+        const qteInput = ligne.querySelector('input[placeholder="Qté"]');
+        const prixInput = ligne.querySelector('input[placeholder="Résultat"]');
+
+        const quantite = parseFloat(qteInput.value) || 0;
+        const prix = parseFloat(prixInput.value.replace(' €', '')) || 0;
+
+        totalQuantite += quantite;
+        totalPrix += prix;
+    });
+
+    document.getElementById('totalQuantite').textContent = totalQuantite;
+    document.getElementById('totalPrix').textContent = `${totalPrix.toFixed(2)} €`;
+}
+
+
    // Fonction pour ajouter une nouvelle ligne de quincaillerie
 function ajouterQuincallerieLine(quincaillerieData) {
     const ligneQuincallerie = document.getElementById("ligneQuincallerie");
@@ -311,6 +332,7 @@ const formatCurrency2 = (value) => {
 
     // Ajout de la nouvelle ligne au conteneur
     ligneQuincallerie.appendChild(nouvelleLigne);
+    calculerTotauxQuincaillerie();
 }
 
 
@@ -358,7 +380,18 @@ function ajouterLigneBois(boisData) {
 
     const specialCharsDiv = document.createElement("div");
     specialCharsDiv.style.cursor = "pointer";
-    specialCharsDiv.textContent = "\u204e"; // Afficher le premier caractère par défaut
+
+// Initialiser avec le premier caractère
+    const specialCharacters = ["\u204e", "\u21ae", "\u2195"];
+    let currentCharIndex = 0; // Indice du caractère actuellement affiché
+    specialCharsDiv.textContent = specialCharacters[currentCharIndex];
+
+    specialCharsDiv.addEventListener("click", () => {
+    // Incrémenter l'indice du caractère
+        currentCharIndex = (currentCharIndex + 1) % specialCharacters.length;
+    // Mettre à jour le texte du div avec le caractère suivant
+        specialCharsDiv.textContent = specialCharacters[currentCharIndex];
+    });
 
     const deleteButton = document.createElement("button");
     deleteButton.textContent = "\ud83d\uddd1";
@@ -424,7 +457,7 @@ function ajouterLigneBois(boisData) {
     nouvelleLigne.appendChild(libelleBois);
     nouvelleLigne.appendChild(surfaceBois); // Ajout du champ de surface
     nouvelleLigne.appendChild(prixTotalBois); // Ajout du champ de prix total
-    //nouvelleLigne.appendChild(specialCharsDiv); // Ajout de la zone des caractères spéciaux
+    nouvelleLigne.appendChild(specialCharsDiv); // Ajout de la zone des caractères spéciaux
     nouvelleLigne.appendChild(deleteButton);
 
     ligneBois.appendChild(nouvelleLigne);
