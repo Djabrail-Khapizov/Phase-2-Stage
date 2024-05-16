@@ -378,18 +378,39 @@ function ajouterLigneBois(boisData) {
     prixTotalBois.placeholder = "Total";
     prixTotalBois.disabled = true;
 
+    // Création du rectangle avec différents états
+    const rectangle = document.createElement("div");
+    rectangle.style.width = "75%"; // Largeur du rectangle
+    rectangle.style.height = "20px"; // Hauteur du rectangle
+    rectangle.style.border = "2px solid black"; // Bordure noire par défaut
+    rectangle.style.marginRight = "10px"; // Marge pour espacer le rectangle des autres éléments
+
+    const rectangleStates = [
+        { border: "2px solid black" },
+        { border: "2px solid black", borderLeft: "4px solid blue" },
+        { border: "2px solid black", borderBottom: "4px solid blue" },
+        { border: "3px solid blue" }
+        
+    ];
+    let currentRectIndex = 0;
+
+    rectangle.addEventListener("click", () => {
+        currentRectIndex = (currentRectIndex + 1) % rectangleStates.length;
+        Object.assign(rectangle.style, rectangleStates[currentRectIndex]);
+    });
+
     const specialCharsDiv = document.createElement("div");
     specialCharsDiv.style.cursor = "pointer";
 
-// Initialiser avec le premier caractère
+    // Initialiser avec le premier caractère
     const specialCharacters = ["\u204e", "\u21ae", "\u2195"];
     let currentCharIndex = 0; // Indice du caractère actuellement affiché
     specialCharsDiv.textContent = specialCharacters[currentCharIndex];
 
     specialCharsDiv.addEventListener("click", () => {
-    // Incrémenter l'indice du caractère
+        // Incrémenter l'indice du caractère
         currentCharIndex = (currentCharIndex + 1) % specialCharacters.length;
-    // Mettre à jour le texte du div avec le caractère suivant
+        // Mettre à jour le texte du div avec le caractère suivant
         specialCharsDiv.textContent = specialCharacters[currentCharIndex];
     });
 
@@ -457,11 +478,13 @@ function ajouterLigneBois(boisData) {
     nouvelleLigne.appendChild(libelleBois);
     nouvelleLigne.appendChild(surfaceBois); // Ajout du champ de surface
     nouvelleLigne.appendChild(prixTotalBois); // Ajout du champ de prix total
+    nouvelleLigne.appendChild(rectangle); // Ajout du rectangle avant les caractères spéciaux
     nouvelleLigne.appendChild(specialCharsDiv); // Ajout de la zone des caractères spéciaux
     nouvelleLigne.appendChild(deleteButton);
 
     ligneBois.appendChild(nouvelleLigne);
 }
+
 
 
 
