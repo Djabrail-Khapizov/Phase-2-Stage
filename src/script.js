@@ -158,7 +158,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return columns;
     };
     
-        
     
 
    // Fonction pour récupérer les données de la feuille "Bois"
@@ -206,28 +205,107 @@ const fetchBois = (url, boisData) => {
         });
         });
     })
- 
 
-function calculerTotauxQuincaillerie() {
-    const lignes = document.querySelectorAll('.quincaillerie-line');
-    let totalQuantite = 0;
-    let totalPrix = 0;
 
-    lignes.forEach(ligne => {
-        const qteInput = ligne.querySelector('input[placeholder="Qté"]');
-        const prixInput = ligne.querySelector('input[placeholder="Résultat"]');
-
-        const quantite = parseFloat(qteInput.value) || 0;
-        const prix = parseFloat(prixInput.value.replace(' €', '')) || 0;
-
-        totalQuantite += quantite;
-        totalPrix += prix;
+    const createTotalQuincaillerieLine = () => {
+        const totalQuincaillerie = document.getElementById("totalQuincaillerie");
+    
+        const totalLine = document.createElement("div");
+        totalLine.classList.add("total-quincaillerie-line");
+    
+        // Texte fixe "Total Quincaillerie"
+        const totalLabel = document.createElement("span");
+        totalLabel.textContent = "Total Quincaillerie";
+    
+        // Champ pour la quantité totale avec le texte "Items"
+        const totalQuantities = document.createElement("input");
+        totalQuantities.type = "text";
+        totalQuantities.disabled = true;
+    
+        // Champ pour le prix total
+        const totalPrices = document.createElement("input");
+        totalPrices.type = "text";
+        totalPrices.disabled = true;
+    
+        // Bouton "CMD"
+        const cmdButton = document.createElement("button");
+        cmdButton.textContent = "Liste CMD";
+        cmdButton.classList.add("cmd-button");
+        cmdButton.addEventListener("click", generateXLS); // Ajouter l'événement de clic pour générer le fichier XLS
+    
+        totalLine.appendChild(totalLabel);
+        totalLine.appendChild(totalQuantities);
+        totalLine.appendChild(totalPrices);
+        totalLine.appendChild(cmdButton); // Ajouter le bouton CMD à la ligne de totaux
+    
+        totalQuincaillerie.appendChild(totalLine);
+    
+        return { totalQuantities, totalPrices };
+    };
+    
+    const generateXLS = () => {
+        const quincaillerieLines = document.querySelectorAll('.quincaillerie-line');
+        const data = [];
+    
+        // Ajouter les en-têtes de colonne
+        data.push(["Libellé", "Référence", "Fournisseur", "Lien", "Prix Unitaire", "Quantité", "Endroit", "Total"]);
+    
+        // Ajouter les données des lignes de quincaillerie
+        quincaillerieLines.forEach(line => {
+            const libelle = line.querySelector('select').value;
+            const ref = line.querySelector('input[type="text"][placeholder="Référence"]').value;
+            const lien = line.querySelector('input[type="text"][placeholder="Lien"]').value;
+            const prixUnitaire = line.querySelector('input[type="text"][placeholder="Prix U"]').value;
+            const quantite = line.querySelector('input[type="number"]').value;
+            const endroit = line.querySelector('input[type="text"][placeholder="Endroit"]').value;
+            const total = line.querySelector('input[type="text"][placeholder="Résultat"]').value;
+    
+            data.push([libelle, ref, "Fournisseur", lien, prixUnitaire, quantite, endroit, total]);
+        });
+    
+        // Créer un nouveau classeur
+        const wb = XLSX.utils.book_new();
+        // Convertir les données en une feuille de calcul
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        // Ajouter la feuille de calcul au classeur
+        XLSX.utils.book_append_sheet(wb, ws, "Quincaillerie");
+        // Générer le fichier XLSX et le télécharger
+        XLSX.writeFile(wb, "Quincaillerie.xlsx");
+    };
+    
+    // Initialisation
+    document.addEventListener('DOMContentLoaded', () => {
+        const { totalQuantities, totalPrices } = createTotalQuincaillerieLine();
+    
+        // Écouter les événements de changement sur les quantités et les prix
+        document.getElementById('ligneQuincallerie').addEventListener('input', () => {
+            updateTotals(totalQuantities, totalPrices);
+        });
     });
-
-    document.getElementById('totalQuantite').textContent = totalQuantite;
-    document.getElementById('totalPrix').textContent = `${totalPrix.toFixed(2)} €`;
-}
-
+    
+    
+    // Fonction pour mettre à jour les totaux
+    const updateTotals = (totalQuantities, totalPrices) => {
+        const quincaillerieLines = document.querySelectorAll('.quincaillerie-line');
+        let totalQuant = 0;
+        let totalPrice = 0;
+    
+        quincaillerieLines.forEach(line => {
+            const quantityInput = line.querySelector('input[type="number"]');
+            const priceInput = line.querySelector('input[placeholder="Prix U"]');
+            if (quantityInput && priceInput) {
+                const quantity = parseFloat(quantityInput.value) || 0;
+                const price = parseFloat(priceInput.value.replace(' €/U', '').replace(',', '.')) || 0;
+                totalQuant += quantity;
+                totalPrice += quantity * price;
+            }
+        });
+    
+        // Mettre à jour les champs avec les totaux
+        totalQuantities.value = `${totalQuant} Items`;
+        totalPrices.value = `${totalPrice.toFixed(2)} €`;
+    };
+    
 
    // Fonction pour ajouter une nouvelle ligne de quincaillerie
 function ajouterQuincallerieLine(quincaillerieData) {
@@ -272,6 +350,7 @@ function ajouterQuincallerieLine(quincaillerieData) {
     deleteButton.addEventListener("click", () => {
         // Supprimer la ligne parente lors du clic sur le bouton Supprimer
             ligneQuincallerie.removeChild(nouvelleLigne);
+            updateTotalQuincaillerie();
         });
 
     // Événement pour mettre à jour le résultat lors de la modification de la quantité
@@ -281,8 +360,12 @@ function ajouterQuincallerieLine(quincaillerieData) {
         const resultat = quantite * prixUnitaire;
 
         if (!isNaN(resultat) && resultat !== 0) {
-            resultatQuincaillerie.value = formatCurrency(resultat); // Formatage du résultat avec le symbole Euro
+            resultatQuincaillerie.value = formatCurrency(resultat);
+        } else {
+            resultatQuincaillerie.value = "";
         }
+        
+        updateTotalQuincaillerie();
     });
 
     
@@ -313,6 +396,16 @@ selectLibelle.addEventListener("change", () => {
     }
 });
 
+inputRef.addEventListener("input", () => {
+        const enteredRef = inputRef.value;
+        const selectedQuincaillerie = quincaillerieData.find(item => item.ref === enteredRef);
+        if (selectedQuincaillerie) {
+            selectLibelle.value = selectedQuincaillerie.libelle;
+            inputLien.value = selectedQuincaillerie.lien;
+            prixUniteQuincaillerie.value = formatCurrency2(selectedQuincaillerie.prixU);
+        }
+    });
+
 // Fonction pour formater le prix unitaire avec le symbole Euro et le suffixe "/U"
 const formatCurrency2 = (value) => {
     const formattedValue = value.toFixed(2); // Formatage avec deux décimales
@@ -332,7 +425,6 @@ const formatCurrency2 = (value) => {
 
     // Ajout de la nouvelle ligne au conteneur
     ligneQuincallerie.appendChild(nouvelleLigne);
-    calculerTotauxQuincaillerie();
 }
 
 
