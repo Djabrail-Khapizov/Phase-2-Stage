@@ -206,9 +206,16 @@ const fetchBois = (url, boisData) => {
         });
     })
 
+  
+    
 
     const createTotalQuincaillerieLine = () => {
         const totalQuincaillerie = document.getElementById("totalQuincaillerie");
+    
+        // Vérifier si la ligne "Total Quincaillerie" existe déjà
+        if (totalQuincaillerie.children.length > 0) {
+            return; // Ne rien faire si la ligne existe déjà
+        }
     
         const totalLine = document.createElement("div");
         totalLine.classList.add("total-quincaillerie-line");
@@ -227,12 +234,11 @@ const fetchBois = (url, boisData) => {
         totalPrices.type = "text";
         totalPrices.disabled = true;
     
-        // Bouton "CMD"
         const cmdButton = document.createElement("button");
-        cmdButton.textContent = "Liste CMD";
-        cmdButton.classList.add("cmd-button");
+        cmdButton.textContent = "CMD";
+        cmdButton.classList.add("cmd-button"); // Ajouter une classe au bouton CMD
         cmdButton.addEventListener("click", generateXLS); // Ajouter l'événement de clic pour générer le fichier XLS
-    
+
         totalLine.appendChild(totalLabel);
         totalLine.appendChild(totalQuantities);
         totalLine.appendChild(totalPrices);
@@ -243,6 +249,8 @@ const fetchBois = (url, boisData) => {
         return { totalQuantities, totalPrices };
     };
     
+    
+    // Fonction pour générer le fichier XLS
     const generateXLS = () => {
         const quincaillerieLines = document.querySelectorAll('.quincaillerie-line');
         const data = [];
@@ -282,6 +290,7 @@ const fetchBois = (url, boisData) => {
             updateTotals(totalQuantities, totalPrices);
         });
     });
+    
     
     
     // Fonction pour mettre à jour les totaux
@@ -470,19 +479,17 @@ function ajouterLigneBois(boisData) {
     prixTotalBois.placeholder = "Total";
     prixTotalBois.disabled = true;
 
-    // Création du rectangle avec différents états
     const rectangle = document.createElement("div");
-    rectangle.style.width = "75%"; // Largeur du rectangle
-    rectangle.style.height = "20px"; // Hauteur du rectangle
-    rectangle.style.border = "2px solid black"; // Bordure noire par défaut
-    rectangle.style.marginRight = "10px"; // Marge pour espacer le rectangle des autres éléments
+    rectangle.style.width = "75%";
+    rectangle.style.height = "20px";
+    rectangle.style.border = "2px solid black";
+    rectangle.style.marginRight = "10px";
 
     const rectangleStates = [
         { border: "2px solid black" },
         { border: "2px solid black", borderLeft: "4px solid blue" },
         { border: "2px solid black", borderBottom: "4px solid blue" },
         { border: "3px solid blue" }
-        
     ];
     let currentRectIndex = 0;
 
@@ -494,15 +501,12 @@ function ajouterLigneBois(boisData) {
     const specialCharsDiv = document.createElement("div");
     specialCharsDiv.style.cursor = "pointer";
 
-    // Initialiser avec le premier caractère
     const specialCharacters = ["\u204e", "\u21ae", "\u2195"];
-    let currentCharIndex = 0; // Indice du caractère actuellement affiché
+    let currentCharIndex = 0;
     specialCharsDiv.textContent = specialCharacters[currentCharIndex];
 
     specialCharsDiv.addEventListener("click", () => {
-        // Incrémenter l'indice du caractère
         currentCharIndex = (currentCharIndex + 1) % specialCharacters.length;
-        // Mettre à jour le texte du div avec le caractère suivant
         specialCharsDiv.textContent = specialCharacters[currentCharIndex];
     });
 
@@ -511,14 +515,21 @@ function ajouterLigneBois(boisData) {
     deleteButton.classList.add("delete-button");
     deleteButton.addEventListener("click", () => {
         ligneBois.removeChild(nouvelleLigne);
+        updateTotalValues(); // Update totals when a row is deleted
+        checkAndRemoveTotalBoisLine(selectBois.value); // Check if the total line should be removed
     });
 
-    // Ajout des options de bois au menu déroulant
     boisData.forEach(item => {
         const option = document.createElement("option");
         option.textContent = item.typeBois;
         selectBois.appendChild(option);
     });
+
+    const updateTotalLabel = () => {
+        const selectedTypeBois = selectBois.value;
+        createTotalBoisLine(selectedTypeBois);
+        updateTotalValues(); // Update totals when selection changes
+    };
 
     selectBois.addEventListener("change", () => {
         const selectedTypeBois = selectBois.value;
@@ -527,21 +538,21 @@ function ajouterLigneBois(boisData) {
             boisRef.value = selectedBois.ref;
             prixMBois.value = selectedBois.prixBois;
         }
+        updateTotalLabel(); // Update the total label when the selection changes
     });
 
     boisRef.addEventListener("input", () => {
         const enteredRef = boisRef.value.trim();
         const matchingItem = boisData.find(item => item.ref === enteredRef);
         if (matchingItem) {
-            // Mettre à jour le menu déroulant avec le type de bois correspondant
             const option = document.createElement("option");
             option.textContent = matchingItem.typeBois;
-            selectBois.innerHTML = ''; // Réinitialiser les options
+            selectBois.innerHTML = '';
             selectBois.appendChild(option);
+            updateTotalLabel(); // Update the total label when the reference changes
         }
     });
 
-    // Gestionnaire d'événements pour calculer la surface et le prix total lorsque les valeurs sont modifiées
     const updateSurfaceAndPrice = () => {
         const longueur = parseFloat(longBois.value) / 1000 || 0; // Conversion de mm en m
         const largeur = parseFloat(largBois.value) / 1000 || 0; // Conversion de mm en m
@@ -553,29 +564,125 @@ function ajouterLigneBois(boisData) {
 
         const prixTotal = prixM2 * surface;
         prixTotalBois.value = prixTotal.toFixed(2) + " €"; // Supposons que le prix soit en euros
+
+        updateTotalValues(); // Update totals when values change
     };
 
-    // Écouteurs d'événements pour mettre à jour la surface et le prix total
     longBois.addEventListener("input", updateSurfaceAndPrice);
     largBois.addEventListener("input", updateSurfaceAndPrice);
     qteBois.addEventListener("input", updateSurfaceAndPrice);
     prixMBois.addEventListener("input", updateSurfaceAndPrice);
 
-    // Ajout des éléments à la nouvelle ligne
     nouvelleLigne.appendChild(selectBois);
     nouvelleLigne.appendChild(boisRef);
     nouvelleLigne.appendChild(longBois);
     nouvelleLigne.appendChild(largBois);
     nouvelleLigne.appendChild(qteBois);
     nouvelleLigne.appendChild(libelleBois);
-    nouvelleLigne.appendChild(surfaceBois); // Ajout du champ de surface
-    nouvelleLigne.appendChild(prixTotalBois); // Ajout du champ de prix total
-    nouvelleLigne.appendChild(rectangle); // Ajout du rectangle avant les caractères spéciaux
-    nouvelleLigne.appendChild(specialCharsDiv); // Ajout de la zone des caractères spéciaux
+    nouvelleLigne.appendChild(surfaceBois); 
+    nouvelleLigne.appendChild(prixTotalBois); 
+    nouvelleLigne.appendChild(rectangle); 
+    nouvelleLigne.appendChild(specialCharsDiv); 
     nouvelleLigne.appendChild(deleteButton);
 
     ligneBois.appendChild(nouvelleLigne);
+
+    updateTotalLabel();
 }
+
+const updateTotalValues = () => {
+    const ligneBois = document.querySelectorAll(".bois-line");
+    const totalBois = document.getElementById("totalBois");
+
+    const totalMap = new Map();
+
+    ligneBois.forEach(line => {
+        const selectBois = line.querySelector("select").value;
+        const surface = parseFloat(line.querySelector('input[placeholder="Surface (m²)"]').value) || 0;
+        const price = parseFloat(line.querySelector('input[placeholder="Total"]').value) || 0;
+
+        if (!totalMap.has(selectBois)) {
+            totalMap.set(selectBois, { surface: 0, price: 0 });
+        }
+
+        const total = totalMap.get(selectBois);
+        total.surface += surface;
+        total.price += price;
+        totalMap.set(selectBois, total);
+    });
+
+    totalMap.forEach((value, key) => {
+        const totalBoisLine = totalBois.querySelector(`.total-bois-line[data-type="${key}"]`);
+        if (totalBoisLine) {
+            totalBoisLine.querySelector('input[placeholder="Surface (m²)"]').value = value.surface.toFixed(2) + " m²";
+            totalBoisLine.querySelector('input[placeholder="Total"]').value = value.price.toFixed(2) + " €";
+        }
+    });
+};
+
+const createTotalBoisLine = (typeBois) => {
+    const totalBois = document.getElementById("totalBois");
+
+    let existingLine = document.querySelector(`.total-bois-line[data-type="${typeBois}"]`);
+    if (existingLine) {
+        return;
+    }
+
+    const totalBoisLine = document.createElement("div");
+    totalBoisLine.classList.add("total-bois-line");
+    totalBoisLine.setAttribute("data-type", typeBois);
+
+    const totalBoisLabel = document.createElement("span");
+    totalBoisLabel.textContent = `Total Bois ${typeBois}`;
+
+    const totalSurface = document.createElement("input");
+    totalSurface.type = "text";
+    totalSurface.placeholder = "Surface (m²)";
+    totalSurface.disabled = true;
+
+    const totalBoisPrice = document.createElement("input");
+    totalBoisPrice.type = "text";
+    totalBoisPrice.placeholder = "Total";
+    totalBoisPrice.disabled = true;
+
+    const csvButton = document.createElement("button");
+    csvButton.textContent = "CSV CUTLIST";
+    csvButton.classList.add("csv-button");
+
+    const ficheButton = document.createElement("button");
+    ficheButton.textContent = "FICHE DEBIT";
+    ficheButton.classList.add("fiche-button");
+
+    totalBoisLine.appendChild(totalBoisLabel);
+    totalBoisLine.appendChild(totalSurface);
+    totalBoisLine.appendChild(totalBoisPrice);
+    totalBoisLine.appendChild(csvButton);
+    totalBoisLine.appendChild(ficheButton);
+
+    totalBois.appendChild(totalBoisLine);
+
+    return { totalSurface, totalBoisPrice };
+};
+
+const checkAndRemoveTotalBoisLine = (typeBois) => {
+    const ligneBois = document.querySelectorAll(".bois-line");
+    let count = 0;
+
+    ligneBois.forEach(line => {
+        if (line.querySelector("select").value === typeBois) {
+            count++;
+        }
+    });
+
+    if (count === 0) {
+        const totalBoisLine = document.querySelector(`.total-bois-line[data-type="${typeBois}"]`);
+        if (totalBoisLine) {
+            totalBoisLine.remove();
+        }
+    }
+};
+
+
 
 
 
