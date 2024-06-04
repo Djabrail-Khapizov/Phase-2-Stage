@@ -661,6 +661,10 @@ const createTotalBoisLine = (typeBois) => {
 
     totalBois.appendChild(totalBoisLine);
 
+    ficheButton.addEventListener('click', () => {
+        generateFicheDebForTypeBois(typeBois);
+    });
+
     return { totalSurface, totalBoisPrice };
 };
 
@@ -681,6 +685,63 @@ const checkAndRemoveTotalBoisLine = (typeBois) => {
         }
     }
 };
+
+
+// Fonction pour collecter les données des lignes d'articles pour un type de bois donné et générer un fichier XLSX
+function generateFicheDebForTypeBois(typeBois) {
+    const articles = [];
+    const boisLines = document.querySelectorAll('.bois-line'); // Assurez-vous que les lignes de bois ont la classe "bois-line"
+
+    boisLines.forEach(line => {
+        const selectedTypeBois = line.querySelector('select').value; // Assurez-vous que le type de bois est sélectionné dans un <select>
+        if (selectedTypeBois === typeBois) { // Filtrer par type de bois
+            const longueur = line.querySelector('input[placeholder="LONG (mm)"]').value;
+            const largeur = line.querySelector('input[placeholder="LARG (mm)"]').value;
+            const quantite = line.querySelector('input[placeholder="Qté"]').value;
+            const etiquette = line.querySelector('input[placeholder="Libellé"]').value;
+            const commentaire = ""; // Laisser vide
+
+            articles.push({ longueur, largeur, quantite, etiquette, commentaire });
+        }
+    });
+
+    generateExcel(articles, typeBois);
+}
+
+// Fonction pour générer et télécharger le fichier XLSX
+function generateExcel(articles, typeBois) {
+    const data = [];
+    data.push(["LONGUEUR", "LARGEUR", "QUANTITE", "ETIQUETTE", "COMMENTAIRE"]); // En-têtes des colonnes
+
+    articles.forEach(article => {
+        data.push([
+            article.longueur,
+            article.largeur,
+            article.quantite,
+            article.etiquette,
+            article.commentaire
+        ]);
+    });
+
+    const wb = XLSX.utils.book_new();
+    const sheetName = `Fiche Débit ${typeBois}`.substring(0, 31); // Tronquer le nom de la feuille à 31 caractères
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    XLSX.writeFile(wb, `Fiche_Debit_${typeBois}.xlsx`);
+}
+
+// Fonction pour ajouter des gestionnaires d'événements aux boutons "FICHE DEBIT"
+function addFicheDebEventListeners() {
+    const ficheButtons = document.querySelectorAll('.fiche-button');
+    
+    ficheButtons.forEach(button => {
+        button.addEventListener('click', (event) => {
+            const typeBois = event.target.closest('.total-bois-line').getAttribute('data-type');
+            generateFicheDebForTypeBois(typeBois);
+        });
+    });
+}
+
 
 
 
