@@ -480,25 +480,29 @@ function ajouterLigneBois(boisData) {
     prixTotalBois.disabled = true;
 
     const rectangle = document.createElement("div");
+    rectangle.classList.add("rectangle");
     rectangle.style.width = "75%";
     rectangle.style.height = "20px";
     rectangle.style.border = "2px solid black";
     rectangle.style.marginRight = "10px";
+    rectangle.setAttribute('data-index', '0');
 
     const rectangleStates = [
         { border: "2px solid black" },
         { border: "2px solid black", borderLeft: "4px solid blue" },
         { border: "2px solid black", borderBottom: "4px solid blue" },
-        { border: "3px solid blue" }
+        { border: "4px solid blue" }
     ];
     let currentRectIndex = 0;
 
     rectangle.addEventListener("click", () => {
         currentRectIndex = (currentRectIndex + 1) % rectangleStates.length;
         Object.assign(rectangle.style, rectangleStates[currentRectIndex]);
+        rectangle.setAttribute('data-index', currentRectIndex.toString());
     });
 
     const specialCharsDiv = document.createElement("div");
+    specialCharsDiv.classList.add("special-chars-div"); // Ajouter une classe identifiable
     specialCharsDiv.style.cursor = "pointer";
 
     const specialCharacters = ["\u204e", "\u21ae", "\u2195"];
@@ -620,7 +624,7 @@ const updateTotalValues = () => {
     });
 };
 
-const createTotalBoisLine = (typeBois) => {
+function createTotalBoisLine(typeBois) {
     const totalBois = document.getElementById("totalBois");
 
     let existingLine = document.querySelector(`.total-bois-line[data-type="${typeBois}"]`);
@@ -661,12 +665,18 @@ const createTotalBoisLine = (typeBois) => {
 
     totalBois.appendChild(totalBoisLine);
 
+    // Ajouter un gestionnaire d'événements au nouveau bouton "CSV CUTLIST"
+    csvButton.addEventListener('click', () => {
+        generateCsvForTypeBois(typeBois);
+    });
+
+    // Ajouter un gestionnaire d'événements au nouveau bouton "FICHE DEBIT"
     ficheButton.addEventListener('click', () => {
         generateFicheDebForTypeBois(typeBois);
     });
 
     return { totalSurface, totalBoisPrice };
-};
+}
 
 const checkAndRemoveTotalBoisLine = (typeBois) => {
     const ligneBois = document.querySelectorAll(".bois-line");
@@ -741,6 +751,113 @@ function addFicheDebEventListeners() {
         });
     });
 }
+
+function generateCsvForTypeBois(typeBois) {
+    const articles = [];
+    const boisLines = document.querySelectorAll('.bois-line');
+
+    boisLines.forEach(line => {
+        const selectedTypeBois = line.querySelector('select').value;
+        if (selectedTypeBois === typeBois) {
+            const longueur = line.querySelector('input[placeholder="LONG (mm)"]').value;
+            const largeur = line.querySelector('input[placeholder="LARG (mm)"]').value;
+            const quantite = line.querySelector('input[placeholder="Qté"]').value;
+            const libelle = line.querySelector('input[placeholder="Libellé"]').value;
+            const enabled = "TRUE";
+
+            // Obtenir la direction du grain
+            const specialCharsDiv = line.querySelector('.special-chars-div');
+            let grainDirection = "";
+            if (specialCharsDiv) {
+                const currentChar = specialCharsDiv.textContent;
+                if (currentChar === "\u21ae") {
+                    grainDirection = 'h';
+                } else if (currentChar === "\u2195") {
+                    grainDirection = 'v';
+                }
+            }
+
+            // Obtenir les bandes
+            const rectangle = line.querySelector('.rectangle');
+            let topBand = "";
+            let leftBand = "";
+            let bottomBand = "";
+            let rightBand = "";
+
+            if (rectangle) {
+                const currentRectIndex = parseInt(rectangle.getAttribute('data-index'), 10);
+                switch (currentRectIndex) {
+                    case 1:
+                        leftBand = "X";
+                        break;
+                    case 2:
+                        bottomBand = "X";
+                        break;
+                    case 3:
+                        topBand = "X";
+                        leftBand = "X";
+                        bottomBand = "X";
+                        rightBand = "X";
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            articles.push({ longueur, largeur, quantite, libelle, enabled, grainDirection, topBand, leftBand, bottomBand, rightBand });
+        }
+    });
+
+    generateCsv(articles, typeBois);
+}
+
+// Fonction pour générer et télécharger le fichier CSV
+function generateCsv(articles, typeBois) {
+    const data = [];
+    data.push(["LONGUEUR", "LARGEUR", "QUANTITE", "LIBELLE", "ENABLED", "GRAIN DIRECTION", "TOP BAND", "LEFT BAND", "BOTTOM BAND", "RIGHT BAND"]); // En-têtes des colonnes
+
+    articles.forEach(article => {
+        data.push([
+            article.longueur,
+            article.largeur,
+            article.quantite,
+            article.libelle,
+            article.enabled,
+            article.grainDirection,
+            article.topBand,
+            article.leftBand,
+            article.bottomBand,
+            article.rightBand
+        ]);
+    });
+
+    const csvContent = data.map(e => e.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Cutlist_${typeBois}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// Fonction pour ajouter des gestionnaires d'événements aux boutons "CSV CUTLIST"
+function addCsvCutlistEventListeners() {
+    const csvButtons = document.querySelectorAll('.csv-button');
+    
+    csvButtons.forEach(button => {
+        button.addEventListener('click', (event) => {
+            const typeBois = event.target.closest('.total-bois-line').getAttribute('data-type');
+            generateCsvForTypeBois(typeBois);
+        });
+    });
+}
+
+// Appeler la fonction pour ajouter les gestionnaires d'événements aux boutons "CSV CUTLIST"
+addCsvCutlistEventListeners();
 
 
 
